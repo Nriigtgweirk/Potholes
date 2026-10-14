@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURA-OpenRoad | Live Pothole & Road Quality Dashboard</title>
+  
+  <!-- Leaflet CSS for Map Styling -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      background-color: #f4f6f9;
+    }
+
+    header {
+      background-color: #1a252f;
+      color: #ffffff;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+      color: #3498db;
+    }
+
+    header p {
+      font-size: 0.85rem;
+      color: #bdc3c7;
+    }
+
+    .main-container {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    /* Sidebar Controls & Feed */
+    .sidebar {
+      width: 320px;
+      background-color: #ffffff;
+      border-right: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      padding: 1rem;
+      overflow-y: auto;
+      z-index: 900;
+    }
+
+    .stats-card {
+      background-color: #ecf0f1;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .stats-card h3 {
+      font-size: 0.9rem;
+      color: #7f8c8d;
+      margin-bottom: 0.5rem;
+    }
+
+    .stats-number {
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .filter-group {
+      margin-bottom: 1rem;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .filter-group select {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      outline: none;
+    }
+
+    .legend {
+      background-color: #fff;
+      padding: 0.8rem;
+      border-radius: 6px;
+      border: 1px solid #ddd;
+      margin-top: auto;
+    }
+
+    .legend h4 {
+      font-size: 0.85rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      font-size: 0.8rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+
+    /* Map Styling */
+    #map {
+      flex: 1;
+      height: 100%;
+    }
+
+    /* Popup Styling */
+    .leaflet-popup-content-wrapper {
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .popup-title {
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 4px;
+    }
+
+    .popup-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 0.75rem;
+      border-radius: 4px;
+      color: white;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .badge-critical { background-color: #e74c3c; }
+    .badge-moderate { background-color: #f39c12; }
+    .badge-repaired { background-color: #2ecc71; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>AURA-OpenRoad</h1>
+      <p>Crowdsourced Road Degradation & Pothole Registry (India)</p>
+    </div>
+  </header>
+
+  <div class="main-container">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="stats-card">
+        <h3>TOTAL HAZARDS MAPPED</h3>
+        <div class="stats-number" id="total-count">0</div>
+      </div>
+
+      <div class="filter-group">
+        <label for="severity-filter">Filter by Severity:</label>
+        <select id="severity-filter" onchange="filterMap()">
+          <option value="ALL">Show All</option>
+          <option value="CRITICAL">Critical (High Impact)</option>
+          <option value="MODERATE">Moderate</option>
+          <option value="REPAIRED">Repaired</option>
+        </select>
+      </div>
+
+      <div class="legend">
+        <h4>Severity Index</h4>
+        <div class="legend-item">
+          <span class="color-dot" style="background-color: #e74c3c;"></span> Critical (Depth > 5cm)
+        </div>
+        <div class="legend-item">
+          <span class="color-dot" style="background-color: #f39c12;"></span> Moderate (Depth 2-5cm)
+        </div>
+        <div class="legend-item">
+          <span class="color-dot" style="background-color: #2ecc71;"></span> Repaired / Verified
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Canvas -->
+    <div id="map"></div>
+  </div>
+
+  <!-- Leaflet JS Library -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <script>
+    // 1. Initialize Map Centered on India
+    const map = L.map('map').setView([20.5937, 78.9629], 5);
+
+    // 2. Add OpenStreetMap Tile Layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+      attribution: '© OpenStreetMap contributors | AURA Telematics'
+    }).addTo(map);
+
+    // 3. Mock Dataset (Pothole Telematics Data across Indian Highways)
+    const potholeData = [
+      { id: "PH-001", location: "NH-48, Near Cyber City, Gurugram", lat: 28.4950, lng: 77.0890, severity: "CRITICAL", depth: "7 cm", passes: 142, status: "Active" },
+      { id: "PH-002", location: "Delhi-Noida Direct (DND) Flyway", lat: 28.5672, lng: 77.2815, severity: "MODERATE", depth: "3 cm", passes: 89, status: "Active" },
+      { id: "PH-003", location: "Mumbai-Pune Expressway, Khandala", lat: 18.7537, lng: 73.3732, severity: "CRITICAL", depth: "9 cm", passes: 310, status: "Active" },
+      { id: "PH-004", location: "Western Express Highway, Andheri", lat: 19.1197, lng: 72.8464, severity: "REPAIRED", depth: "0 cm", passes: 45, status: "Resolved" },
+      { id: "PH-005", location: "Outer Ring Road, Marathahalli, Bengaluru", lat: 12.9563, lng: 77.7019, severity: "CRITICAL", depth: "8 cm", passes: 520, status: "Active" },
+      { id: "PH-006", location: "Electronic City Flyway, Bengaluru", lat: 12.8452, lng: 77.6602, severity: "MODERATE", depth: "4 cm", passes: 112, status: "Active" },
+      { id: "PH-007", location: "PVNR Expressway, Hyderabad", lat: 17.3753, lng: 78.4382, severity: "MODERATE", depth: "3.5 cm", passes: 67, status: "Active" },
+      { id: "PH-008", location: "EM Bypass, Kolkata", lat: 22.5354, lng: 88.3968, severity: "CRITICAL", depth: "6.5 cm", passes: 201, status: "Active" },
+      { id: "PH-009", location: "NH-66, Near Edappally, Kochi", lat: 10.0261, lng: 76.3089, severity: "REPAIRED", depth: "0 cm", passes: 18, status: "Resolved" }
+    ];
+
+    let markerGroup = L.layerGroup().addTo(map);
+
+    // 4. Color Mapping Helper
+    function getColor(severity) {
+      switch (severity) {
+        case 'CRITICAL': return '#e74c3c';
+        case 'MODERATE': return '#f39c12';
+        case 'REPAIRED': return '#2ecc71';
+        default: return '#3498db';
+      }
+    }
+
+    // 5. Render Markers on Map
+    function renderMarkers(filter = "ALL") {
+      markerGroup.clearLayers();
+      let count = 0;
+
+      potholeData.forEach(item => {
+        if (filter === "ALL" || item.severity === filter) {
+          count++;
+          
+          // Create Circle Marker
+          const marker = L.circleMarker([item.lat, item.lng], {
+            radius: item.severity === 'CRITICAL' ? 10 : 7,
+            fillColor: getColor(item.severity),
+            color: '#ffffff',
+            weight: 2,
+            opacity: 1,
+            fillOpacity: 0.85
+          });
+
+          // Bind Interactive Popup
+          const popupContent = `
+            <div class="popup-title">${item.location}</div>
+            <span class="popup-badge badge-${item.severity.toLowerCase()}">${item.severity}</span>
+            <div style="font-size: 0.8rem; color: #555;">
+              <strong>ID:</strong> ${item.id}<br>
+              <strong>Est. Depth:</strong> ${item.depth}<br>
+              <strong>Sensor Confirmations:</strong> ${item.passes} unique vehicles<br>
+              <strong>Status:</strong> ${item.status}
+            </div>
+          `;
+
+          marker.bindPopup(popupContent);
+          markerGroup.addLayer(marker);
+        }
+      });
+
+      document.getElementById('total-count').innerText = count;
+    }
+
+    // 6. Filter Event Handler
+    function filterMap() {
+      const selectedValue = document.getElementById('severity-filter').value;
+      renderMarkers(selectedValue);
+    }
+
+    // Initial Render
+    renderMarkers();
+  </script>
+</body>
+</html>
