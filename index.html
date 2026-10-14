@@ -1,58 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TATA AURA - OpenRoad Civic Dashboard (Raipur / Naya Raipur)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TATA AURA - OpenRoad Civic Portal & Hazard Map</title>
   
-  <!-- Leaflet CSS (Open-Source Map Engine) -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  
-  <!-- FontAwesome for UI Icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  
-  <!-- Chart.js for Live Vector Analytics -->
+  <!-- Leaflet CSS (Open Source Maps - No API Key Required) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <!-- Chart.js for Telemetry Graphs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 
   <style>
     :root {
       --tata-blue: #00529b;
-      --tata-dark: #002e58;
-      --accent-gold: #ffb400;
-      --danger-red: #e63946;
-      --warning-amber: #f4a261;
-      --success-green: #2a9d8f;
+      --tata-dark: #0a192f;
+      --accent-cyan: #00d2ff;
+      --hazard-red: #ff3860;
+      --hazard-amber: #ffdd57;
+      --hazard-green: #23d160;
       --bg-dark: #0f172a;
-      --panel-bg: rgba(15, 23, 42, 0.92);
-      --border-color: rgba(255, 255, 255, 0.12);
+      --panel-bg: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
     }
 
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
     }
 
     body {
       background-color: var(--bg-dark);
-      color: #f8fafc;
-      overflow: hidden;
-      height: 100vh;
+      color: var(--text-main);
       display: flex;
       flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
     }
 
     /* Top Navigation Header */
     header {
-      background: linear-gradient(90deg, var(--tata-dark), var(--tata-blue));
+      background: linear-gradient(90deg, var(--tata-dark) 0%, #002b50 100%);
       padding: 12px 24px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      border-bottom: 2px solid var(--accent-cyan);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
       z-index: 1000;
-      border-bottom: 1px solid var(--border-color);
     }
 
     .brand {
@@ -62,98 +62,97 @@
     }
 
     .brand-logo {
-      background: #ffffff;
-      color: var(--tata-dark);
+      background: var(--tata-blue);
+      color: #fff;
       font-weight: 900;
-      font-size: 1.2rem;
-      padding: 4px 10px;
+      padding: 6px 12px;
       border-radius: 4px;
+      font-size: 1.2rem;
       letter-spacing: 1px;
     }
 
     .brand-title h1 {
       font-size: 1.25rem;
       font-weight: 700;
-      letter-spacing: 0.5px;
-    }
-
-    .brand-title p {
-      font-size: 0.75rem;
-      color: #cbd5e1;
-    }
-
-    .header-badges {
-      display: flex;
-      gap: 16px;
-      align-items: center;
-    }
-
-    .badge {
-      background: rgba(255, 255, 255, 0.1);
-      border: 1px solid var(--border-color);
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 0.8rem;
+      color: #fff;
       display: flex;
       align-items: center;
       gap: 8px;
     }
 
-    .badge i {
-      color: var(--accent-gold);
+    .brand-title p {
+      font-size: 0.75rem;
+      color: var(--accent-cyan);
+      letter-spacing: 0.5px;
     }
 
-    /* Main App Layout */
-    .app-container {
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .gov-badge {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: #cbd5e1;
+    }
+
+    /* Main Container Split */
+    .main-container {
       display: flex;
       flex: 1;
+      height: calc(100vh - 65px);
       position: relative;
-      overflow: hidden;
     }
 
-    /* Interactive Leaflet Map View */
+    /* Interactive Map Area */
     #map {
       flex: 1;
       height: 100%;
-      background: #0f172a;
+      background: #000;
       z-index: 1;
     }
 
-    /* Sidebar Analytics Panel */
-    .sidebar {
+    /* Side Control Panel */
+    .dashboard-panel {
       width: 420px;
-      background: var(--panel-bg);
-      backdrop-filter: blur(12px);
+      background-color: var(--panel-bg);
       border-left: 1px solid var(--border-color);
       display: flex;
       flex-direction: column;
       gap: 16px;
-      padding: 20px;
+      padding: 16px;
       overflow-y: auto;
-      z-index: 500;
-      box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+      z-index: 10;
+      box-shadow: -5px 0 25px rgba(0,0,0,0.5);
     }
 
     .panel-card {
-      background: rgba(30, 41, 59, 0.7);
+      background: rgba(15, 23, 42, 0.6);
       border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
+      border-radius: 8px;
+      padding: 14px;
     }
 
     .panel-card h3 {
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--accent-gold);
+      letter-spacing: 0.8px;
+      color: var(--accent-cyan);
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      gap: 8px;
     }
 
+    /* Stats Grid */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -161,495 +160,541 @@
     }
 
     .stat-box {
-      background: rgba(15, 23, 42, 0.6);
+      background: var(--panel-bg);
       padding: 10px;
-      border-radius: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      border-left: 3px solid var(--tata-blue);
     }
 
-    .stat-box label {
-      display: block;
-      font-size: 0.7rem;
-      color: #94a3b8;
-      margin-bottom: 4px;
-    }
+    .stat-box.danger { border-left-color: var(--hazard-red); }
+    .stat-box.warning { border-left-color: var(--hazard-amber); }
+    .stat-box.success { border-left-color: var(--hazard-green); }
 
-    .stat-box .value {
-      font-size: 1.1rem;
+    .stat-value {
+      font-size: 1.3rem;
       font-weight: 700;
-      color: #ffffff;
+      color: #fff;
     }
 
-    /* Real-Time Live Event Feed */
-    .event-feed {
+    .stat-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Event Log Stream */
+    .log-stream {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      max-height: 160px;
+      max-height: 150px;
       overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.75rem;
     }
 
-    .event-item {
-      background: rgba(15, 23, 42, 0.8);
-      border-left: 4px solid var(--tata-blue);
-      padding: 8px 12px;
+    .log-item {
+      padding: 6px 8px;
+      background: rgba(0,0,0,0.3);
       border-radius: 4px;
-      font-size: 0.75rem;
+      border-left: 2px solid var(--accent-cyan);
+      color: #e2e8f0;
+    }
+
+    .log-time { color: var(--text-muted); font-size: 0.65rem; }
+
+    /* Calculator Controls */
+    .calc-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .calc-slider {
+      width: 100%;
+      accent-color: var(--accent-cyan);
+    }
+
+    .calc-result {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      animation: fadeIn 0.4s ease-in-out;
-    }
-
-    .event-item.hazard { border-left-color: var(--danger-red); }
-    .event-item.speed { border-left-color: var(--warning-amber); }
-
-    /* NeuCoin Interactive Calculator */
-    .calculator-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .calculator-group label {
-      font-size: 0.8rem;
-      color: #cbd5e1;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    input[type=range] {
-      width: 100%;
-      accent-color: var(--accent-gold);
+      background: rgba(0, 82, 155, 0.2);
+      border: 1px solid var(--tata-blue);
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 6px;
     }
 
     /* Buttons */
     .btn {
-      background: linear-gradient(90deg, var(--tata-blue), var(--tata-dark));
+      background: var(--tata-blue);
       color: #fff;
-      border: 1px solid var(--border-color);
-      padding: 10px 16px;
-      border-radius: 6px;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 4px;
       cursor: pointer;
       font-weight: 600;
-      font-size: 0.85rem;
-      display: flex;
+      font-size: 0.8rem;
+      display: inline-flex;
       align-items: center;
-      justify-content: center;
-      gap: 8px;
-      transition: all 0.2s ease;
+      gap: 6px;
+      transition: all 0.2s;
     }
 
     .btn:hover {
-      filter: brightness(1.2);
+      background: #0066c0;
       transform: translateY(-1px);
     }
 
-    .btn-danger {
-      background: linear-gradient(90deg, #c1121f, #780000);
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
     }
 
-    /* Map Marker Popup Styling */
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    /* Leaflet Popup Custom Styling */
     .leaflet-popup-content-wrapper {
-      background: #0f172a !important;
-      color: #f8fafc !important;
-      border: 1px solid var(--border-color);
-      border-radius: 12px !important;
+      background: var(--panel-bg) !important;
+      color: var(--text-main) !important;
+      border: 1px solid var(--accent-cyan);
+      border-radius: 8px !important;
       padding: 4px !important;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6) !important;
     }
 
     .leaflet-popup-tip {
-      background: #0f172a !important;
-    }
-
-    .popup-card {
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      width: 240px;
+      background: var(--panel-bg) !important;
     }
 
     .popup-card h4 {
-      color: var(--accent-gold);
-      font-size: 0.9rem;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 4px;
+      color: var(--hazard-red);
+      font-size: 0.95rem;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
-    .popup-info {
+    .popup-card p {
       font-size: 0.75rem;
-      line-height: 1.4;
-      color: #cbd5e1;
+      color: var(--text-muted);
+      margin-bottom: 4px;
     }
 
-    .popup-badge {
+    .popup-card .tag {
       display: inline-block;
       padding: 2px 6px;
-      border-radius: 4px;
+      background: rgba(255, 56, 96, 0.2);
+      color: var(--hazard-red);
+      border-radius: 3px;
       font-size: 0.65rem;
-      font-weight: 700;
-      text-transform: uppercase;
+      font-weight: bold;
+      margin-top: 4px;
     }
 
-    .badge-red { background: rgba(230, 57, 70, 0.2); color: #f87171; border: 1px solid #ef4444; }
-    .badge-amber { background: rgba(244, 162, 97, 0.2); color: #fbbf24; border: 1px solid #f59e0b; }
-    .badge-green { background: rgba(42, 157, 143, 0.2); color: #34d399; border: 1px solid #10b981; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
+    .popup-actions {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
     }
 
-    /* Responsive adjustment for compact screens */
-    @media (max-width: 900px) {
-      .app-container { flex-direction: column; }
-      .sidebar { width: 100%; height: 40%; }
-      #map { height: 60%; }
+    .popup-actions button {
+      font-size: 0.7rem;
+      padding: 4px 8px;
+    }
+
+    /* Sovereign Disclaimer Banner */
+    .sovereign-banner {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      z-index: 500;
+      background: rgba(10, 25, 47, 0.9);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      backdrop-filter: blur(4px);
+      pointer-events: none;
+    }
+
+    /* Custom Pulsing Marker CSS */
+    .pulse-marker {
+      border-radius: 50%;
+      box-shadow: 0 0 0 0 rgba(255, 56, 96, 0.7);
+      animation: pulse-red 1.5s infinite;
+    }
+
+    @keyframes pulse-red {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 56, 96, 0.7);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 12px rgba(255, 56, 96, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(255, 56, 96, 0);
+      }
     }
   </style>
 </head>
 <body>
 
-  <!-- Header Banner -->
+  <!-- Navigation Header -->
   <header>
     <div class="brand">
       <div class="brand-logo">TATA</div>
       <div class="brand-title">
-        <h1>AURA — OpenRoad Portal</h1>
-        <p>Civic Hazard Mapping & Telematics Engine • Raipur & Naya Raipur</p>
+        <h1>AURA-OpenRoad <span style="font-size: 0.7rem; background: var(--accent-cyan); color: #000; padding: 2px 6px; border-radius: 10px; font-weight: bold;">LIVE</span></h1>
+        <p>Zero-Hardware Crowd-Sourced Road Asset & Safety Network</p>
       </div>
     </div>
-    <div class="header-badges">
-      <div class="badge"><i class="fa-solid fa-map-pin"></i> OpenStreetMap (No API Key Required)</div>
-      <div class="badge"><i class="fa-solid fa-shield-halved"></i> Govt. Sovereign Map Bounds</div>
+    <div class="header-actions">
+      <div class="gov-badge">
+        <i class="fa-solid fa-building-columns"></i>
+        <span>NHAI & PWD Audit Ledger | Raipur Corridor</span>
+      </div>
+      <button class="btn btn-secondary" onclick="exportAuditReport()">
+        <i class="fa-solid fa-file-export"></i> Export Audit
+      </button>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <div class="app-container">
+  <!-- Main Workspace -->
+  <div class="main-container">
     
-    <!-- Open-Source Map Canvas -->
+    <!-- OpenStreetMap Container (Zero API Key) -->
     <div id="map"></div>
 
-    <!-- Live Telematics Side Panel -->
-    <div class="sidebar">
-      
-      <!-- Key System Metrics -->
-      <div class="panel-card">
-        <h3><i class="fa-solid fa-chart-line"></i> Live Raipur Stats</h3>
-        <div class="stats-grid">
-          <div class="stat-box">
-            <label>Active Nodes</label>
-            <div class="value" id="activeNodes">1,284</div>
-          </div>
-          <div class="stat-box">
-            <label>Verified Hazards</label>
-            <div class="value" style="color: var(--danger-red);">18</div>
-          </div>
-          <div class="stat-box">
-            <label>Speed Compliance</label>
-            <div class="value" style="color: var(--success-green);">92.4%</div>
-          </div>
-          <div class="stat-box">
-            <label>NeuCoins Issued</label>
-            <div class="value" style="color: var(--accent-gold);">48,920</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Real-Time Vector Waveform Chart -->
-      <div class="panel-card">
-        <h3><i class="fa-solid fa-wave-square"></i> Telematics Z-Axis Spike Stream</h3>
-        <div style="height: 120px; position: relative;">
-          <canvas id="vectorChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Live Stream Log -->
-      <div class="panel-card">
-        <h3><i class="fa-solid fa-satellite-dish"></i> Live Edge Event Log</h3>
-        <div class="event-feed" id="eventFeed">
-          <div class="event-item hazard">
-            <span><strong>Naya Raipur Sector 24:</strong> Z-Spike 3.4g verified</span>
-            <span>Just now</span>
-          </div>
-          <div class="event-item speed">
-            <span><strong>VIP Road:</strong> Speed compliance +10 NeuCoins</span>
-            <span>2m ago</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- NeuCoin Reward & Insurance Savings Calculator -->
-      <div class="panel-card">
-        <h3><i class="fa-solid fa-coins"></i> Driver Rewards Calculator</h3>
-        <div class="calculator-group">
-          <label>Monthly Highway Distance: <span id="distVal" style="color:var(--accent-gold); font-weight:700;">450 km</span></label>
-          <input type="range" id="distSlider" min="50" max="2000" step="50" value="450">
-        </div>
-        <div class="stats-grid" style="margin-top: 6px;">
-          <div class="stat-box">
-            <label>Est. NeuCoins Earned</label>
-            <div class="value" id="calcCoins" style="color:var(--accent-gold);">450 / mo</div>
-          </div>
-          <div class="stat-box">
-            <label>Tata AIG Discount</label>
-            <div class="value" id="calcDiscount" style="color:var(--success-green);">15% OFF</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Action Button -->
-      <button class="btn btn-danger" onclick="simulateVehiclePass()">
-        <i class="fa-solid fa-car-burst"></i> Simulate Test Vehicle Pothole Pass
-      </button>
-
-      <button class="btn" onclick="exportMunicipalCSV()">
-        <i class="fa-solid fa-file-csv"></i> Export Municipal Audit Report (CSV)
-      </button>
-
+    <!-- Map Disclaimer -->
+    <div class="sovereign-banner">
+      <i class="fa-solid fa-shield-halved" style="color: var(--accent-cyan);"></i> Unified Map Representation | Republic of India Sovereignty Map Standard
     </div>
+
+    <!-- Dashboard Sidebar -->
+    <aside class="dashboard-panel">
+      
+      <!-- Key Statistics -->
+      <div class="panel-card">
+        <h3><i class="fa-solid fa-chart-line"></i> Raipur Corridor Overview</h3>
+        <div class="stats-grid">
+          <div class="stat-box danger">
+            <div class="stat-value" id="active-hazards">6</div>
+            <div class="stat-label">Active Craters</div>
+          </div>
+          <div class="stat-box warning">
+            <div class="stat-value" id="consensus-nodes">148</div>
+            <div class="stat-label">Telemetry Nodes</div>
+          </div>
+          <div class="stat-box success">
+            <div class="stat-value">98.2%</div>
+            <div class="stat-label">Speed Compliance</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="neu-distributed">4,250</div>
+            <div class="stat-label">NeuCoins Awarded</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Real-Time Sensor Telemetry Chart -->
+      <div class="panel-card">
+        <h3><i class="fa-solid fa-wave-square"></i> Live Gyro/Accelerometer Stream</h3>
+        <canvas id="telemetryChart" height="120"></canvas>
+      </div>
+
+      <!-- Live Event Feed -->
+      <div class="panel-card">
+        <h3><i class="fa-solid fa-satellite-dish"></i> Edge Consensus Log</h3>
+        <div class="log-stream" id="event-logs">
+          <div class="log-item">
+            <span class="log-time">[20:28:12]</span> Z-Spike 3.4g at GE Road. Geohash verified.
+          </div>
+          <div class="log-item">
+            <span class="log-time">[20:27:45]</span> Device #TATA-8832 logged speed compliance (62km/h on VIP Rd).
+          </div>
+          <div class="log-item">
+            <span class="log-time">[20:25:01]</span> Consensus reached: Marker #RP-03 flagged for PWD patch repair.
+          </div>
+        </div>
+      </div>
+
+      <!-- Driver Rewards Calculator -->
+      <div class="panel-card">
+        <h3><i class="fa-solid fa-coins"></i> Tata Neu & Insurance Calculator</h3>
+        <p style="font-size: 0.75rem; color: var(--text-muted);">Simulate monthly earnings by maintaining safe speed compliance on National Highways:</p>
+        <div class="calc-group">
+          <label style="font-size: 0.75rem;">Monthly Highway Driving: <strong id="dist-val" style="color:var(--accent-cyan)">450 km</strong></label>
+          <input type="range" class="calc-slider" id="dist-slider" min="50" max="2000" value="450" oninput="updateCalculator()" />
+          
+          <div class="calc-result">
+            <div>
+              <div style="font-size: 0.7rem; color: var(--text-muted);">Estimated Rewards</div>
+              <div style="font-size: 1rem; font-weight: bold; color: var(--hazard-green);" id="reward-neu">450 NeuCoins</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-size: 0.7rem; color: var(--text-muted);">Tata AIG UBI Discount</div>
+              <div style="font-size: 1rem; font-weight: bold; color: var(--accent-cyan);" id="reward-ins">15% Off</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
   </div>
 
-  <!-- Leaflet JS Map Library -->
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Leaflet JS (Open Source Maps) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
   <script>
-    // -------------------------------------------------------------------------
-    // 1. INITIALIZE OPEN-SOURCE LEAFLET MAP (NO API KEY REQUIRED)
-    // Uses standard OpenStreetMap public tiles
-    // -------------------------------------------------------------------------
-    
-    // Center map on Raipur / Naya Raipur (Atal Nagar)
-    const raipurCenter = [21.2121, 81.6800];
+    // --- 1. INITIALIZE OPENSTREETMAP (NO API KEY REQUIRED) ---
+    // Centered on Raipur & Naya Raipur (Atal Nagar), Chhattisgarh
+    const raipurCoords = [21.2514, 81.6296];
     const map = L.map('map', {
-      center: raipurCenter,
+      center: raipurCoords,
       zoom: 12,
       zoomControl: true
     });
 
-    // Add free OpenStreetMap tile layer (100% free, no token needed)
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    // Official OpenStreetMap Standard Tile Layer (Free & Public)
+    L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | TATA AURA'
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | TATA AURA Engine'
     }).addTo(map);
 
-    // -------------------------------------------------------------------------
-    // 2. SIMULATED POTHOLE & ROAD HAZARD DATASET (RAIPUR & NAYA RAIPUR)
-    // -------------------------------------------------------------------------
-    const hazardData = [
+    // --- 2. SAMPLE POTHOLE DATASET FOR RAIPUR & NAYA RAIPUR ---
+    const potholeDataset = [
       {
-        id: "HAZ-RPR-001",
-        title: "GE Road (Near NIT Raipur Gate)",
+        id: "RP-01",
+        location: "GE Road (Near NIT Raipur Gate)",
         lat: 21.2497,
         lng: 81.6050,
         severity: "HIGH",
-        badgeClass: "badge-red",
-        zSpike: "3.8g",
-        passes: 24,
-        contractor: "Raipur Urban Roads Ltd.",
-        status: "SLA Breach (Action Needed)"
+        gForce: "3.8g",
+        swervedAngle: "18.2°",
+        consensusCount: 18,
+        contractor: "Central Zone PWD Infra Ltd",
+        warrantyExpires: "Nov 2027",
+        status: "Active Hazard"
       },
       {
-        id: "HAZ-RPR-002",
-        title: "VIP Road (Near Telibandha Lake Turn)",
-        lat: 21.2330,
+        id: "RP-02",
+        location: "Telibandha Expressway Flyover Descent",
+        lat: 21.2415,
         lng: 81.6620,
-        severity: "MEDIUM",
-        badgeClass: "badge-amber",
-        zSpike: "2.4g",
-        passes: 14,
-        contractor: "Chhatisgarh PWD Div-1",
-        status: "Pending Patching"
+        severity: "HIGH",
+        gForce: "4.1g",
+        swervedAngle: "22.5°",
+        consensusCount: 29,
+        contractor: "Expressway Infra Corp",
+        warrantyExpires: "Jan 2028",
+        status: "Active Hazard"
       },
       {
-        id: "HAZ-NR-003",
-        title: "Naya Raipur Sector 24 (Mantralaya Blvd)",
+        id: "RP-03",
+        location: "VIP Road (Near Airport Turn)",
+        lat: 21.2180,
+        lng: 81.7010,
+        severity: "MEDIUM",
+        gForce: "2.6g",
+        swervedAngle: "11.0°",
+        consensusCount: 9,
+        contractor: "Raipur Urban Roads",
+        warrantyExpires: "Aug 2026",
+        status: "Active Hazard"
+      },
+      {
+        id: "NR-01",
+        location: "Naya Raipur Sector 24 Boulevard (Near Mantralaya)",
         lat: 21.1610,
         lng: 81.7870,
         severity: "HIGH",
-        badgeClass: "badge-red",
-        zSpike: "4.1g",
-        passes: 31,
-        contractor: "NRDA Infrastructure Corp",
-        status: "SLA Breach (Action Needed)"
+        gForce: "3.5g",
+        swervedAngle: "16.4°",
+        consensusCount: 14,
+        contractor: "NRDA Smart Infra",
+        warrantyExpires: "Dec 2028",
+        status: "Active Hazard"
       },
       {
-        id: "HAZ-RPR-004",
-        title: "Ring Road 1 (Pachpedi Naka Flyover Base)",
-        lat: 21.2150,
-        lng: 81.6520,
+        id: "NR-02",
+        location: "CBD Sector 21 Entry Road, Naya Raipur",
+        lat: 21.1750,
+        lng: 81.7720,
         severity: "MEDIUM",
-        badgeClass: "badge-amber",
-        zSpike: "2.1g",
-        passes: 9,
-        contractor: "Raipur Urban Roads Ltd.",
-        status: "Under Inspection"
+        gForce: "2.3g",
+        swervedAngle: "9.5°",
+        consensusCount: 7,
+        contractor: "NRDA Smart Infra",
+        warrantyExpires: "Dec 2028",
+        status: "Active Hazard"
       },
       {
-        id: "HAZ-NR-005",
-        title: "Kanger Valley Rd (Naya Raipur Entry)",
-        lat: 21.1820,
-        lng: 81.7350,
-        severity: "REPAIRED",
-        badgeClass: "badge-green",
-        zSpike: "0.4g",
-        passes: 52,
-        contractor: "NRDA Infrastructure Corp",
-        status: "Sealed & Verified"
+        id: "RP-04",
+        location: "Ring Road 1 (Bhanpuri Junction)",
+        lat: 21.2850,
+        lng: 81.6410,
+        severity: "CRITICAL",
+        gForce: "4.6g",
+        swervedAngle: "28.0°",
+        consensusCount: 42,
+        contractor: "National Highways Zone 4",
+        warrantyExpires: "May 2026 (EXPIRED)",
+        status: "Escalated to NHAI"
       }
     ];
 
-    // Color mapper for markers
-    function getMarkerColor(severity) {
-      if (severity === 'HIGH') return '#e63946';
-      if (severity === 'MEDIUM') return '#f4a261';
-      return '#2a9d8f';
-    }
-
-    // Add Hazard Markers to Leaflet Map
-    hazardData.forEach(hazard => {
-      const color = getMarkerColor(hazard.severity);
+    // --- 3. CUSTOM PULSING MAP MARKERS & POPUPS ---
+    potholeDataset.forEach(spot => {
+      // Circle Marker with pulse effect
+      const markerColor = spot.severity === "CRITICAL" || spot.severity === "HIGH" ? '#ff3860' : '#ffdd57';
       
-      // Custom circle marker with pulse styling
-      const marker = L.circleMarker([hazard.lat, hazard.lng], {
+      const circleMarker = L.circleMarker([spot.lat, spot.lng], {
         radius: 10,
-        fillColor: color,
+        fillColor: markerColor,
         color: '#ffffff',
         weight: 2,
         opacity: 1,
         fillOpacity: 0.8
       }).addTo(map);
 
-      // Interactive Popup Card
+      // Popup Content Layout
       const popupHTML = `
         <div class="popup-card">
-          <h4>${hazard.title}</h4>
-          <div><span class="popup-badge ${hazard.badgeClass}">${hazard.severity} HAZARD</span></div>
-          <div class="popup-info">
-            <strong>ID:</strong> ${hazard.id}<br>
-            <strong>Consensus:</strong> ${hazard.passes} unique vector passes<br>
-            <strong>Z-Axis Impact Spike:</strong> ${hazard.zSpike}<br>
-            <strong>Contractor:</strong> ${hazard.contractor}<br>
-            <strong>Audit Status:</strong> ${hazard.status}
+          <h4><i class="fa-solid fa-triangle-exclamation"></i> ${spot.id}: ${spot.location}</h4>
+          <p><strong>Severity:</strong> <span class="tag">${spot.severity}</span></p>
+          <p><strong>Sensor Vector:</strong> Z-Spike ${spot.gForce} | Yaw Swerve ${spot.swervedAngle}</p>
+          <p><strong>Consensus:</strong> Verified by ${spot.consensusCount} independent vehicles</p>
+          <p><strong>Contractor:</strong> ${spot.contractor}</p>
+          <p><strong>SLA Warranty:</strong> ${spot.warrantyExpires}</p>
+          <div class="popup-actions">
+            <button class="btn" onclick="testAudioAlert('${spot.location}')">
+              <i class="fa-solid fa-volume-high"></i> Test Audio Alert
+            </button>
+            <button class="btn btn-secondary" onclick="triggerSmartContractAudit('${spot.id}')">
+              <i class="fa-solid fa-file-contract"></i> Audit SLA
+            </button>
           </div>
-          <button class="btn" style="padding:4px 8px; font-size:0.7rem;" onclick="playAudioWarning('${hazard.title}')">
-            <i class="fa-solid fa-volume-high"></i> Test Audio Warning
-          </button>
         </div>
       `;
 
-      marker.bindPopup(popupHTML);
+      circleMarker.bindPopup(popupHTML);
     });
 
-    // -------------------------------------------------------------------------
-    // 3. LIVE CHART.JS TELEMATICS WAVEFORM
-    // -------------------------------------------------------------------------
-    const ctx = document.getElementById('vectorChart').getContext('2d');
-    const chartData = {
-      labels: Array.from({length: 20}, (_, i) => `${i}s`),
-      datasets: [{
-        label: 'Z-Axis Displacement (g)',
-        data: [1.0, 1.0, 0.9, 1.1, 1.0, 3.8, 1.2, 1.0, 0.9, 1.0, 1.1, 2.4, 1.0, 1.0, 0.9, 1.0, 1.1, 1.0, 1.0, 1.0],
-        borderColor: '#00529b',
-        borderWidth: 2,
-        backgroundColor: 'rgba(0, 82, 155, 0.1)',
-        fill: true,
-        tension: 0.3,
-        pointRadius: 2
-      }]
-    };
-
-    const vectorChart = new Chart(ctx, {
+    // --- 4. REAL-TIME SENSOR TELEMETRY GRAPH (CHART.JS) ---
+    const ctx = document.getElementById('telemetryChart').getContext('2d');
+    const telemetryChart = new Chart(ctx, {
       type: 'line',
-      data: chartData,
+      data: {
+        labels: ['0s', '1s', '2s', '3s', '4s', '5s', '6s', '7s', '8s', '9s'],
+        datasets: [
+          {
+            label: 'Accelerometer Z-Axis (g)',
+            data: [1.0, 1.02, 0.98, 1.01, 3.85, 1.1, 0.95, 1.0, 1.01, 0.99],
+            borderColor: '#ff3860',
+            backgroundColor: 'rgba(255, 56, 96, 0.1)',
+            borderWidth: 2,
+            tension: 0.3,
+            fill: true
+          },
+          {
+            label: 'Gyroscope Yaw Rate (°/s)',
+            data: [0.1, 0.2, -0.1, 0.3, 18.2, -4.1, 0.5, 0.1, 0.0, 0.1],
+            borderColor: '#00d2ff',
+            borderWidth: 1.5,
+            borderDash: [4, 4],
+            tension: 0.3
+          }
+        ]
+      },
       options: {
         responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: { legend: { labels: { color: '#94a3b8', font: { size: 10 } } } },
         scales: {
-          x: { display: false },
-          y: { 
-            grid: { color: 'rgba(255,255,255,0.05)' },
-            ticks: { color: '#94a3b8', font: { size: 9 } },
-            min: 0,
-            max: 5
-          }
+          x: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#334155' } },
+          y: { ticks: { color: '#64748b', font: { size: 9 } }, grid: { color: '#334155' } }
         }
       }
     });
 
-    // -------------------------------------------------------------------------
-    // 4. INTERACTIVE SIMULATION & CALCULATOR LOGIC
-    // -------------------------------------------------------------------------
-
-    // Audio Warning Simulation using SpeechSynthesis
-    function playAudioWarning(locationName) {
+    // --- 5. INTERACTIVE UTILITIES & AUDIO SIMULATION ---
+    
+    // Simulate Speech Synthesis Voice Alert
+    function testAudioAlert(location) {
       if ('speechSynthesis' in window) {
-        const msg = new SpeechSynthesisUtterance(`Caution! Deep road crater ahead on ${locationName}. Reduce speed now.`);
-        msg.rate = 1.0;
-        msg.pitch = 1.0;
-        window.speechSynthesis.speak(msg);
+        const text = `Caution from TATA AURA: Deep road crater detected 200 meters ahead on ${location}. Recommended speed 30 kilometers per hour.`;
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
       } else {
-        alert(`AUDIO ALERT: Caution! Deep road crater ahead on ${locationName}.`);
+        alert(`[AUDIO PROMPT SIMULATION]: "Caution: Deep road crater 200m ahead on ${location}."`);
       }
     }
 
-    // Simulate Vehicle Pass Event
-    function simulateVehiclePass() {
-      const feed = document.getElementById('eventFeed');
-      const newEvent = document.createElement('div');
-      newEvent.className = 'event-item hazard';
-      
-      const locations = ["GE Road", "VIP Road", "Naya Raipur Sector 24", "Ring Road 1"];
-      const randLoc = locations[Math.floor(Math.random() * locations.length)];
-      const randG = (Math.random() * 2 + 2.5).toFixed(1);
-
-      newEvent.innerHTML = `<span><strong>${randLoc}:</strong> Sensor spike ${randG}g logged</span><span>Just now</span>`;
-      feed.insertBefore(newEvent, feed.firstChild);
-
-      // Add point spike to Chart
-      chartData.datasets[0].data.shift();
-      chartData.datasets[0].data.push(parseFloat(randG));
-      vectorChart.update();
-
-      // Trigger audio warning for test
-      playAudioWarning(randLoc);
+    // Smart Contract Penalty Audit Simulation
+    function triggerSmartContractAudit(hazardId) {
+      alert(`[SMART CONTRACT EXECUTION]:
+---------------------------------------
+Hazard ID: ${hazardId}
+Audit Trigger: Consensus Threshold > 10 Vehicles
+Status: Warranty SLA Breach Confirmed.
+Action: 15% Guarantee Bond forfeited from Contractor Escrow to PWD Repair Fund.`);
     }
 
-    // NeuCoin Calculator Slider
-    const distSlider = document.getElementById('distSlider');
-    const distVal = document.getElementById('distVal');
-    const calcCoins = document.getElementById('calcCoins');
-    const calcDiscount = document.getElementById('calcDiscount');
-
-    distSlider.addEventListener('input', (e) => {
-      const km = e.target.value;
-      distVal.innerText = `${km} km`;
-      calcCoins.innerText = `${km} / mo`;
+    // Dynamic NeuCoin & Insurance Savings Calculator
+    function updateCalculator() {
+      const dist = document.getElementById('dist-slider').value;
+      document.getElementById('dist-val').innerText = `${dist} km`;
       
-      let disc = 10;
-      if (km > 500) disc = 15;
-      if (km > 1000) disc = 20;
-      calcDiscount.innerText = `${disc}% OFF`;
-    });
+      const neuEarned = Math.round(dist * 1.0);
+      const insuranceDiscount = Math.min(25, Math.round(5 + (dist / 100) * 2.5));
 
-    // Export Municipal Report as CSV
-    function exportMunicipalCSV() {
-      let csv = "Hazard_ID,Location,Severity,Z_Spike,Consensus_Passes,Contractor,Status\n";
-      hazardData.forEach(h => {
-        csv += `${h.id},"${h.title}",${h.severity},${h.zSpike},${h.passes},"${h.contractor}","${h.status}"\n`;
+      document.getElementById('reward-neu').innerText = `${neuEarned} NeuCoins`;
+      document.getElementById('reward-ins').innerText = `${insuranceDiscount}% Off`;
+    }
+
+    // Export Municipal CSV Audit Data
+    function exportAuditReport() {
+      let csvContent = "data:text/csv;charset=utf-8,ID,Location,Latitude,Longitude,Severity,G_Force,Consensus_Count,Contractor,Warranty_Status\n";
+      potholeDataset.forEach(row => {
+        csvContent += `${row.id},"${row.location}",${row.lat},${row.lng},${row.severity},${row.gForce},${row.consensusCount},"${row.contractor}",${row.status}\n`;
       });
-
-      const blob = new Blob([csv], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.setAttribute('href', url);
-      a.setAttribute('download', 'TATA_AURA_Raipur_Road_Audit.csv');
-      a.click();
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement("a");
+      link.setAttribute("href", encodedUri);
+      link.setAttribute("download", "TATA_AURA_Raipur_Road_Audit.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
     }
+
+    // Simulated Real-Time Sensor Data Stream (Live Events)
+    setInterval(() => {
+      const logs = document.getElementById('event-logs');
+      const timeStr = new Date().toTimeString().split(' ')[0];
+      const sampleNodes = [412, 883, 104, 552, 901];
+      const randomNode = sampleNodes[Math.floor(Math.random() * sampleNodes.length)];
+      const randomSpeed = Math.floor(Math.random() * 20) + 55;
+
+      const newLog = document.createElement('div');
+      newLog.className = 'log-item';
+      newLog.innerHTML = `<span class="log-time">[${timeStr}]</span> Node #TATA-${randomNode} logged compliance (${randomSpeed} km/h on GE Rd). +1 NeuCoin`;
+      
+      logs.prepend(newLog);
+      if (logs.children.length > 5) {
+        logs.removeChild(logs.lastChild);
+      }
+    }, 4500);
   </script>
 </body>
 </html>
